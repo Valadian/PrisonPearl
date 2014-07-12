@@ -30,7 +30,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import com.untamedears.EnderExpansion.Enderplugin;
+//import com.untamedears.EnderExpansion.Enderplugin;
 
 public class PrisonPearlStorage implements SaveLoad {
 	private PrisonPearlPlugin plugin;
@@ -67,6 +67,9 @@ public class PrisonPearlStorage implements SaveLoad {
 		
 		String line;
 		while ((line = br.readLine()) != null) {
+			if (line.length() <= 0) {
+				continue;
+			}
 			String parts[] = line.split(" ");
 			short id = Short.parseShort(parts[0]);
 			String imprisoned = parts[1];
@@ -158,7 +161,7 @@ public class PrisonPearlStorage implements SaveLoad {
 		BlockState inherentViolence = pp.getHolderBlockState();
 		if (Bukkit.getPluginManager().isPluginEnabled("EnderExpansion")){
 			if (pp.getLocation().getBlock().getType() == Material.ENDER_CHEST){
-				inv[0] = Enderplugin.getchestInventory(pp.getLocation());
+				//inv[0] = Enderplugin.getchestInventory(pp.getLocation());
 				return HolderStateToInventory_SUCCESS;
 			}
 		}
@@ -298,6 +301,10 @@ public class PrisonPearlStorage implements SaveLoad {
 			results[i] = iNames.get(i);
 		}
 		return results;
+	}
+
+	public List<String> getImprisonedNames() {
+		return new ArrayList<String>(pearls_byimprisoned.keySet());
 	}
 
 	public boolean upgradePearl(Inventory inv, PrisonPearl pp) {

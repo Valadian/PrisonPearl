@@ -1,10 +1,13 @@
 package com.untamedears.PrisonPearl;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -160,7 +163,10 @@ class PrisonPearlCommands implements CommandExecutor {
                 return setAlts(sender, args);}
             else{ sender.sendMessage("You Do not have Permissions prisonpearl.setalts");}// if players doesn't have permission, broadcasts message saying what they are missing.
 
-        }return false;
+        } else if (label.equalsIgnoreCase("pplistbans")) {
+            return listBans(sender, args);
+        }
+        return false;
     }
 
     private boolean setAlts(CommandSender sender, String[] args) {
@@ -259,6 +265,10 @@ class PrisonPearlCommands implements CommandExecutor {
         PrisonPearl pp = setCmd(sender, args);
         if (pp == null) {
             return false;
+        }
+        if (args[0] == null){
+            sender.sendMessage("Can't leave distance as null, please enter a number");
+            return true;
         }
         int dist;
         try {
@@ -468,10 +478,22 @@ class PrisonPearlCommands implements CommandExecutor {
             sender.sendMessage(pp.getImprisonedName() + " is already summoned");
             return true;
         }
-        if (summonman.summonPearl(pp))
+        if (summonman.summonPearl(pp)) {
             sender.sendMessage("You've summoned " + pp.getImprisonedName());
-        else
+            final String broadMsg = String.format(
+                "%s summoned %s from a prison pearl.",
+                sender.getName(), pp.getImprisonedName());
+            Set<String> ignoreList = new HashSet<String>();
+            ignoreList.add(pp.getImprisonedName().toLowerCase());
+            ignoreList.add(sender.getName().toLowerCase());
+            PrisonPearl.sendProximityMessage(
+                ((Player)sender).getLocation(),
+                PrisonPearlPlugin.getInstance().getPPConfig().getSummonBroadcastDistance(),
+                broadMsg,
+                ignoreList);
+        } else {
             sender.sendMessage("You failed to summon " + pp.getImprisonedName());
+        }
         return true;
     }
 
@@ -501,10 +523,44 @@ class PrisonPearlCommands implements CommandExecutor {
             sender.sendMessage(pp.getImprisonedName() + " is in combat and cannot be returned!");
             return true;
         }
-        if (summonman.returnPearl(pp))
+
+        final Player prisoner = Bukkit.getPlayerExact(pp.getImprisonedName());
+        final Location prisonerLoc =
+            (prisoner == null) ?  null : prisoner.getLocation().clone();
+        if (summonman.returnPearl(pp)) {
             sender.sendMessage("You've returned " + pp.getImprisonedName());
-        else
+
+            final String senderNameLc = ((Player)sender).getName().toLowerCase();
+            final String prisonerNameLc = pp.getImprisonedName().toLowerCase();
+            final Location senderLoc = ((Player)sender).getLocation();
+            String broadMsg = String.format(
+                "%s returned %s to a prison pearl.",
+                sender.getName(), pp.getImprisonedName());
+            Set<String> ignoreList = new HashSet<String>();
+            ignoreList.add(prisonerNameLc);
+            ignoreList.add(senderNameLc);
+            ignoreList = PrisonPearl.sendProximityMessage(
+                senderLoc,
+                PrisonPearlPlugin.getInstance().getPPConfig().getSummonBroadcastDistance(),
+                broadMsg,
+                ignoreList);
+
+            if (prisonerLoc != null) {
+                ignoreList.add(prisonerNameLc);
+                ignoreList.add(senderNameLc);
+                broadMsg = String.format(
+                    "%s returned %s to a prison pearl at (%d,%d,%d).",
+                    sender.getName(), pp.getImprisonedName(),
+                    senderLoc.getBlockX(), senderLoc.getBlockY(), senderLoc.getBlockZ());
+                PrisonPearl.sendProximityMessage(
+                    prisonerLoc,
+                    PrisonPearlPlugin.getInstance().getPPConfig().getSummonBroadcastDistance(),
+                    broadMsg,
+                    ignoreList);
+            }
+        } else {
             sender.sendMessage("You failed to return " + pp.getImprisonedName());
+        }
         return true;
     }
 
@@ -687,6 +743,32 @@ class PrisonPearlCommands implements CommandExecutor {
             return true;
         }
         return false;
+    }
+
+    private boolean listBans(CommandSender sender, String[] args) {
+        String search = null;
+        if (args.length >= 1) {
+            search = args[0].toLowerCase();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Bans: ");
+        boolean first = true;
+        for (String playerName : plugin.getBanManager().listBannedPlayers()) {
+            if (search == null || playerName.contains(search)) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(", ");
+                }
+                sb.append(playerName);
+            }
+        }
+        if (first) {
+            sender.sendMessage("No matching bans.");
+        } else {
+            sender.sendMessage(sb.toString());
+        }
+        return true;
     }
 
     private boolean kill() {
