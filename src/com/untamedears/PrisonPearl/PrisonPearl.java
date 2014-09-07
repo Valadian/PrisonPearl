@@ -1,6 +1,8 @@
 package com.untamedears.PrisonPearl;
 
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -8,6 +10,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
@@ -319,5 +322,39 @@ public class PrisonPearl {
 
     public void markMove() {
         this.lastMoved = System.currentTimeMillis();
+    }
+    
+    // ignoreList is a Set of lower-case player names to not send messages to
+    public static Set<String> sendProximityMessage(
+            final Location location, final Double distance, final String message, final Set<String> ignoreList) {
+        final Double distSquared = distance * distance;
+        final Double minX = location.getX() - distance;
+        final Double maxX = location.getX() + distance;
+        final Double minZ = location.getZ() - distance;
+        final Double maxZ = location.getZ() + distance;
+        final World world = location.getWorld();
+        final Set<String> messagedPlayers = new HashSet<String>();
+        for (Player other : world.getPlayers()) {
+            final Location otherLoc = other.getLocation();
+            final Double otherX =  otherLoc.getX();
+            if (otherX < minX || otherX > maxX) {
+                continue;
+            }
+            final Double otherZ =  otherLoc.getZ();
+            if (otherZ < minZ || otherZ > maxZ) {
+                continue;
+            }
+            final Double otherDistSq = location.distanceSquared(otherLoc);
+            if (otherDistSq > distSquared) {
+                continue;
+            }
+            final String otherNameLc = other.getName().toLowerCase();
+            if (ignoreList != null && ignoreList.contains(otherNameLc)) {
+                continue;
+            }
+            other.sendMessage(message);
+            messagedPlayers.add(otherNameLc);
+        }
+        return messagedPlayers;
     }
 }

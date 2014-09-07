@@ -1,8 +1,7 @@
 name: PrisonPearl
 main: com.untamedears.PrisonPearl.PrisonPearlPlugin
-version: 1.8.2
-soft-depend: [PhysicalShop, CombatTag]
-
+version: 2.0.7
+softdepend: [NameLayer, CombatTag]
 commands:
    pplocate:
       description: Locates your prison pearl
@@ -105,6 +104,11 @@ commands:
       description: Allows people to add players to the excluded_alts.txt.
       usage: /ppsetalts [playername] [confirmedalt1] [confirmedalt2] etc....
 
+   pplistbans:
+      description: Lists alt banned players
+      usage: /pplistbans [searchtext]
+      permission: prisonpearl.pplistbans
+
 permissions:
    prisonpearl.normal.pplocate:
       description: Gives access to the pplocate command.
@@ -206,6 +210,10 @@ permissions:
       description: Let's players pearl other players.
       default: true
 
+   prisonpearl.pplistbans:
+      description: Allows use of /pplistbans.
+      default: false
+
    prisonpearl.*:
       description: Gives full access to PrisonPearl commands
       default: op
@@ -217,3 +225,4 @@ permissions:
          prisonpearl.getalts: true
          prisonpearl.setalts: true
          prisonpearl.pploadalts: true
+         prisonpearl.pplistbans: true

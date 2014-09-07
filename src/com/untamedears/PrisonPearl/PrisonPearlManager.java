@@ -7,11 +7,11 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-import net.minecraft.server.v1_7_R3.EntityPlayer;
-import net.minecraft.server.v1_7_R3.MinecraftServer;
-import net.minecraft.server.v1_7_R3.PlayerInteractManager;
+import net.minecraft.server.v1_7_R4.MinecraftServer;
+import net.minecraft.server.v1_7_R4.PlayerInteractManager;
+import net.minecraft.server.v1_7_R4.EntityPlayer;
 
-import org.bukkit.craftbukkit.v1_7_R3.CraftServer;
+import org.bukkit.craftbukkit.v1_7_R4.CraftServer;
 
 import net.minecraft.util.com.mojang.authlib.GameProfile;
 

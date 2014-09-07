@@ -41,10 +41,12 @@ public class PrisonPearlStorage implements SaveLoad {
 	private final Map<UUID, PrisonPearl> pearls_byimprisoned;
 	private short nextid;
 	
+	private boolean isNameLayer;
 	private boolean dirty;
 	
 	public PrisonPearlStorage(PrisonPearlPlugin plugin) {
-	this.plugin = plugin;
+		isNameLayer = Bukkit.getPluginManager().getPlugin("NameLayer").isEnabled();
+		this.plugin = plugin;
 		pearls_byid = new HashMap<Short, PrisonPearl>();
 		pearls_byimprisoned = new HashMap<UUID, PrisonPearl>();
 		nextid = 1;
@@ -74,7 +76,12 @@ public class PrisonPearlStorage implements SaveLoad {
 			short id = Short.parseShort(parts[0]);
 			UUID imprisoned = UUID.fromString(parts[1]);
 			Location loc = new Location(Bukkit.getWorld(parts[2]), Integer.parseInt(parts[3]), Integer.parseInt(parts[4]), Integer.parseInt(parts[5]));
-			PrisonPearl pp = PrisonPearl.makeFromLocation(id, NameAPI.getCurrentName(imprisoned), imprisoned, loc);
+			String name = "";
+			if (isNameLayer)
+				name = NameAPI.getCurrentName(imprisoned);
+			else
+				name = Bukkit.getOfflinePlayer(imprisoned).getName();
+			PrisonPearl pp = PrisonPearl.makeFromLocation(id, name, imprisoned, loc);
 			if (parts.length != 6) {
 				String motd = "";
 				for (int i = 6; i < parts.length; i++) {
@@ -305,7 +312,7 @@ public class PrisonPearlStorage implements SaveLoad {
 
 	public boolean upgradePearl(Inventory inv, PrisonPearl pp) {
 		final UUID prisonerId = pp.getImprisonedId();
-		final String prisoner = Bukkit.getPlayer(prisonerId).getName();
+		final String prisoner = Bukkit.getOfflinePlayer(prisonerId).getName();
 		ItemStack is = new ItemStack(Material.ENDER_PEARL, 1, pp.getID());
 		int pearlslot = inv.first(is);
 		if (pearlslot < 0) {

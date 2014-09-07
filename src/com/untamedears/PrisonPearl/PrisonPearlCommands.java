@@ -24,6 +24,7 @@ class PrisonPearlCommands implements CommandExecutor {
     private final PrisonPearlManager pearlman;
     private final SummonManager summonman;
     private final BroadcastManager broadcastman;
+    private boolean isNameLayer;
 
     public PrisonPearlCommands(PrisonPearlPlugin plugin, DamageLogManager damageman, PrisonPearlStorage pearls, PrisonPearlManager pearlman, SummonManager summonman, BroadcastManager broadcastman) {
         this.plugin = plugin;
@@ -32,6 +33,7 @@ class PrisonPearlCommands implements CommandExecutor {
         this.pearlman = pearlman;
         this.summonman = summonman;
         this.broadcastman = broadcastman;
+        isNameLayer = Bukkit.getPluginManager().getPlugin("NameLayer").isEnabled();
     }
 
     @Override
@@ -375,7 +377,11 @@ class PrisonPearlCommands implements CommandExecutor {
                 return false;
             name_is = args[0] + " is";
             name_possesive = args[0] + "'s";
-            UUID uuid = NameAPI.getUUID(args[0]);
+            UUID uuid = null;
+            if (isNameLayer)
+            	uuid = NameAPI.getUUID(args[0]);
+            else
+            	uuid = Bukkit.getOfflinePlayer(args[0]).getUniqueId();
             pp = pearls.getByImprisoned(uuid);
         }
         if (pp != null) {
@@ -412,7 +418,11 @@ class PrisonPearlCommands implements CommandExecutor {
         } else {
             if (args.length != 1)
                 return false;
-            UUID uuid = NameAPI.getUUID(args[0]);
+            UUID uuid = null;
+            if (isNameLayer)
+            	uuid = NameAPI.getUUID(args[0]);
+            else
+            	uuid = Bukkit.getOfflinePlayer(args[0]).getUniqueId();
             pp = pearls.getByImprisoned(uuid);
             if (pp == null) {
                 sender.sendMessage(args[0] + " is not imprisoned");
@@ -437,7 +447,11 @@ class PrisonPearlCommands implements CommandExecutor {
             return true;
         }
         String playerName = args[0];
-        UUID uuid = NameAPI.getUUID(playerName);
+        UUID uuid = null;
+        if (isNameLayer)
+        	uuid = NameAPI.getUUID(args[0]);
+        else
+        	uuid = Bukkit.getOfflinePlayer(args[0]).getUniqueId();
         if (pearlman.imprisonPlayer(uuid, (Player)sender)) {
             sender.sendMessage("You imprisoned " + args[0]);
             Player imprisoned = Bukkit.getPlayer(uuid);
@@ -569,7 +583,11 @@ class PrisonPearlCommands implements CommandExecutor {
             return true;
         }
         Player player = (Player)sender;
-        UUID uuid = NameAPI.getUUID(args[0]);
+        UUID uuid = null;
+        if (isNameLayer)
+        	uuid = NameAPI.getUUID(args[0]);
+        else
+        	uuid = Bukkit.getOfflinePlayer(args[0]).getUniqueId();
         Player receiver = Bukkit.getPlayer(uuid);
         if (receiver == null) {
             sender.sendMessage("No such player " + args[0]);
@@ -600,7 +618,11 @@ class PrisonPearlCommands implements CommandExecutor {
         Player player = (Player)sender;
         Player broadcaster;
         if (args.length == 1) {
-            UUID uuid = NameAPI.getUUID(args[0]);
+        	UUID uuid = null;
+            if (isNameLayer)
+            	uuid = NameAPI.getUUID(args[0]);
+            else
+            	uuid = Bukkit.getOfflinePlayer(args[0]).getUniqueId();
             broadcaster = Bukkit.getPlayer(uuid);
             if (broadcaster == null) {
                 sender.sendMessage("No such player " + args[0]);
@@ -629,7 +651,11 @@ class PrisonPearlCommands implements CommandExecutor {
             return true;
         }
         Player player = (Player)sender;
-        UUID uuid = NameAPI.getUUID(args[0]);
+        UUID uuid = null;
+        if (isNameLayer)
+        	uuid = NameAPI.getUUID(args[0]);
+        else
+        	uuid = Bukkit.getOfflinePlayer(args[0]).getUniqueId();
         Player broadcaster = Bukkit.getPlayer(uuid);
         if (broadcaster == null) {
             sender.sendMessage("No such player " + args[0]);
@@ -665,7 +691,11 @@ class PrisonPearlCommands implements CommandExecutor {
             return player.getInventory().getHeldItemSlot();
         } else {
 
-            UUID uuid = NameAPI.getUUID(args[pos]);
+        	UUID uuid = null;
+            if (isNameLayer)
+            	uuid = NameAPI.getUUID(args[pos]);
+            else
+            	uuid = Bukkit.getOfflinePlayer(args[pos]).getUniqueId();
             PrisonPearl pp = pearls.getByImprisoned(uuid);
             if (pp != null) {
                 Inventory inv = player.getInventory();
@@ -700,7 +730,11 @@ class PrisonPearlCommands implements CommandExecutor {
         if (args.length != 1)
             return false;
         if (!(sender instanceof Player)) {
-            UUID uuid = NameAPI.getUUID(args[0]);
+        	UUID uuid = null;
+            if (isNameLayer)
+            	uuid = NameAPI.getUUID(args[0]);
+            else
+            	uuid = Bukkit.getOfflinePlayer(args[0]).getUniqueId();
             boolean isBanned = plugin.isTempBanned(uuid);
             if (isBanned) {
                 sender.sendMessage(args[0]+" is temp banned for having "+plugin.getImprisonedCount(uuid)+" imprisoned accounts: "+plugin.getImprisonedAltsString(uuid));
@@ -710,6 +744,38 @@ class PrisonPearlCommands implements CommandExecutor {
             return true;
         }
         return false;
+    }
+    
+    private boolean listBans(CommandSender sender, String[] args) {
+        String search = null;
+        if (args.length >= 1) {
+            search = args[0].toLowerCase();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Bans: ");
+        boolean first = true;
+        for (UUID playerUUID : plugin.getBanManager().listBannedUUIDS()) {
+        	UUID uuid = Bukkit.getPlayer(search).getUniqueId();
+            if (search == null || playerUUID.toString().contains(uuid.toString())) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(", ");
+                }
+                String player = "";
+                if (isNameLayer)
+                	player = NameAPI.getCurrentName(playerUUID);
+                else
+                	player = Bukkit.getOfflinePlayer(playerUUID).getName();
+                sb.append(player);
+            }
+        }
+        if (first) {
+            sender.sendMessage("No matching bans.");
+        } else {
+            sender.sendMessage(sb.toString());
+        }
+        return true;
     }
 
     private boolean kill() {
